@@ -196,7 +196,8 @@ def ml_svd_compress(image, model, X_mean, X_std, max_k=256):
 # Welcome banner
 st.markdown("""
 <div class='welcome-banner'>
-    <h1>ML-SVD Image Compression</h1>
+    <h1>ML-SVD Image Compression 
+BY- Anmol Saini</h1>
     <p>Transform your images with cutting-edge ML-based compression. Upload a JPG to see the magic!</p>
 </div>
 """, unsafe_allow_html=True)
@@ -315,7 +316,7 @@ if uploaded_file:
 st.markdown("""
 <div style='text-align: center; padding: 20px; background: #ffffff; border-radius: 10px; margin-top: 20px;'>
     <p style='font-family: Poppins, sans-serif; color: #01579b;'>
-        Built with Streamlit for ML-SVD Image Compression Project | Powered by xAI
+        Built with Streamlit for ML-SVD Image Compression Project by Anmol Saini
     </p>
 </div>
 """, unsafe_allow_html=True)
