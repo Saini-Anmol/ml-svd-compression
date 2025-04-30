@@ -316,7 +316,7 @@ if uploaded_file:
 st.markdown("""
 <div style='text-align: center; padding: 20px; background: #ffffff; border-radius: 10px; margin-top: 20px;'>
     <p style='font-family: Poppins, sans-serif; color: #01579b;'>
-        Built with Streamlit for ML-SVD Image Compression Project by Anmol Saini
+        Built with Streamlit for ML-SVD Image Compression Project
     </p>
 </div>
 """, unsafe_allow_html=True)
