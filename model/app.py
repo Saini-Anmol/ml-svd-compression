@@ -25,22 +25,59 @@ except Exception as e:
     st.error(f"Error loading model or parameters: {e}")
     st.stop()
 
-# SVD compression function
+# SVD compression function with quantization
 def svd_compress(image, k):
+    """
+    Compress an RGB image using SVD with rank k truncation and 8-bit quantization.
+    
+    Args:
+        image: NumPy array of shape (256, 256, 3), values in [0, 1]
+        k: Number of singular values to retain
+    
+    Returns:
+        Compressed image as NumPy array
+    """
     img = image.astype(np.float32)
-    r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
-    Ur, Sr, Vr = np.linalg.svd(r, full_matrices=False)
-    Ug, Sg, Vg = np.linalg.svd(g, full_matrices=False)
-    Ub, Sb, Vb = np.linalg.svd(b, full_matrices=False)
-    r_compressed = np.dot(Ur[:, :k] * Sr[:k], Vr[:k, :])
-    g_compressed = np.dot(Ug[:, :k] * Sg[:k], Vg[:k, :])
-    b_compressed = np.dot(Ub[:, :k] * Sb[:k], Vb[:k, :])
-    compressed_img = np.stack([r_compressed, g_compressed, b_compressed], axis=2)
+    compressed_img = np.zeros_like(img)
+    scaling_factors = []  # Store max singular values for decompression
+    
+    for channel in range(3):
+        # SVD decomposition
+        U, S, Vt = np.linalg.svd(img[:, :, channel], full_matrices=False)
+        
+        # Quantize singular values (S) to 8-bit
+        S_max = np.max(S[:k])
+        scaling_factors.append(S_max)
+        S_quantized = np.round((S[:k] / S_max) * 255).astype(np.uint8)  # Scale to [0, 255]
+        
+        # Quantize U and Vt to 8-bit (values in [-1, 1] scaled to [0, 255])
+        U_quantized = np.round((U[:, :k] + 1) * 127.5).astype(np.uint8)  # [-1, 1] -> [0, 255]
+        Vt_quantized = np.round((Vt[:k, :] + 1) * 127.5).astype(np.uint8)
+        
+        # Decompress: Rescale back to original ranges
+        S_dequantized = (S_quantized / 255.0) * S_max
+        U_dequantized = (U_quantized / 127.5) - 1
+        Vt_dequantized = (Vt_quantized / 127.5) - 1
+        
+        # Reconstruct channel
+        compressed_img[:, :, channel] = np.dot(U_dequantized * S_dequantized, Vt_dequantized)
+    
     compressed_img = np.clip(compressed_img, 0, 1)
     return compressed_img
 
 # Compute SSIM and PSNR metrics
 def compute_metrics(original, compressed):
+    """
+    Compute SSIM and PSNR between original and compressed images.
+    
+    Args:
+        original: NumPy array of shape (256, 256, 3), values in [0, 1]
+        compressed: NumPy array of shape (256, 256, 3), values in [0, 1]
+    
+    Returns:
+        ssim_score: Structural Similarity Index
+        psnr: Peak Signal-to-Noise Ratio
+    """
     if original.shape != compressed.shape or original.shape != (256, 256, 3):
         raise ValueError(f"Expected images of shape (256, 256, 3), got original: {original.shape}, compressed: {compressed.shape}")
     original = np.clip(original, 0, 1)
@@ -52,6 +89,15 @@ def compute_metrics(original, compressed):
 
 # Extract features for ML model
 def extract_features(image):
+    """
+    Extract features from an image for CNN input.
+    
+    Args:
+        image: NumPy array of shape (256, 256, 3), values in [0, 1]
+    
+    Returns:
+        Feature vector: [mean, std, edge_density, entropy]
+    """
     try:
         gray_img = np.mean(image, axis=2)
         edge_density = np.mean(canny(gray_img, sigma=1.0))
@@ -63,8 +109,19 @@ def extract_features(image):
         logging.error(f"Error extracting features: {e}")
         raise
 
-# Estimate ML-SVD file size
-def estimate_ml_svd_size(k, height=256, width=256, bytes_per_element=2):
+# Estimate ML-SVD file size with 8-bit quantization
+def estimate_ml_svd_size(k, height=256, width=256, bytes_per_element=1):
+    """
+    Estimate the file size of ML-SVD compressed image with 8-bit quantization.
+    
+    Args:
+        k: Number of singular values
+        height, width: Image dimensions
+        bytes_per_element: Bytes per matrix element (1 for uint8)
+    
+    Returns:
+        Size in KB
+    """
     elements_per_channel = k * (height + width + 1)
     total_elements = 3 * elements_per_channel
     size_bytes = total_elements * bytes_per_element
@@ -72,11 +129,33 @@ def estimate_ml_svd_size(k, height=256, width=256, bytes_per_element=2):
 
 # Estimate original image size
 def estimate_original_size(height=256, width=256, channels=3, bytes_per_pixel=1):
+    """
+    Estimate uncompressed image size.
+    
+    Args:
+        height, width: Image dimensions
+        channels: Number of channels
+        bytes_per_pixel: Bytes per pixel (uint8)
+    
+    Returns:
+        Size in KB
+    """
     size_bytes = height * width * channels * bytes_per_pixel
     return size_bytes / 1024
 
 # JPEG compression
 def compress_jpeg(image, quality=50):
+    """
+    Compress image using JPEG format.
+    
+    Args:
+        image: NumPy array of shape (256, 256, 3), values in [0, 1]
+        quality: JPEG quality (0-100)
+    
+    Returns:
+        compressed: Compressed image
+        size_kb: Size in KB
+    """
     img = (image * 255).astype(np.uint8)
     _, buffer = cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
     size_kb = len(buffer) / 1024
@@ -85,6 +164,16 @@ def compress_jpeg(image, quality=50):
 
 # PNG compression
 def compress_png(image):
+    """
+    Compress image using PNG format.
+    
+    Args:
+        image: NumPy array of shape (256, 256, 3), values in [0, 1]
+    
+    Returns:
+        compressed: Compressed image
+        size_kb: Size in KB
+    """
     img = (image * 255).astype(np.uint8)
     _, buffer = cv2.imencode('.png', img)
     size_kb = len(buffer) / 1024
@@ -93,6 +182,19 @@ def compress_png(image):
 
 # ML-SVD compression
 def ml_svd_compress(image, model, X_mean, X_std, max_k=256):
+    """
+    Compress an image using ML-predicted k for SVD.
+    
+    Args:
+        image: NumPy array of shape (256, 256, 3), values in [0, 1]
+        model: Trained CNN model
+        X_mean, X_std: Feature normalization parameters
+        max_k: Maximum k value
+    
+    Returns:
+        compressed_img: Compressed image
+        k_pred: Predicted k value
+    """
     features = extract_features(image)
     features_norm = (features - X_mean) / X_std
     k_pred = model.predict(np.array([features_norm]), verbose=0)[0][0] * max_k
@@ -175,4 +277,4 @@ if uploaded_file is not None:
 
 # Footer
 st.markdown("---")
-st.markdown("Built with Streamlit for ML-SVD Image Compression Project")
+st.markdown("Built with Streamlit for ML-SVD Image Compression Project | Powered by xAI")
