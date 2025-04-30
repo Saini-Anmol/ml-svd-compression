@@ -175,4 +175,4 @@ if uploaded_file is not None:
 
 # Footer
 st.markdown("---")
-st.markdown("Built with Streamlit for ML-SVD Image Compression Project | Powered by xAI")
+st.markdown("Built with Streamlit for ML-SVD Image Compression Project")
