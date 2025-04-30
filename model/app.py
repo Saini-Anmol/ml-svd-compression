@@ -12,15 +12,70 @@ from skimage.metrics import structural_similarity as ssim
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Custom CSS for enhanced styling
+# Custom CSS for vibrant, eye-catching UI
 st.markdown("""
 <style>
-    .main {background-color: #f0f2f6;}
-    .stButton>button {background-color: #4CAF50; color: white; border-radius: 8px;}
-    .stTabs [data-baseweb="tab"] {font-size: 18px;}
-    .metric-box {background-color: #ffffff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
-    h1 {color: #2c3e50; text-align: center;}
-    .sidebar .sidebar-content {background-color: #ffffff;}
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    
+    .main {background: linear-gradient(135deg, #e0f7fa 0%, #80deea 100%);}
+    .stButton>button {
+        background: linear-gradient(45deg, #0288d1, #4fc3f7);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .stFileUploader {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .metric-card {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+    }
+    h1, h2, h3 {
+        font-family: 'Poppins', sans-serif;
+        color: #01579b;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        color: #0288d1;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #4fc3f7;
+    }
+    .sidebar .sidebar-content {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .welcome-banner {
+        background: linear-gradient(45deg, #0288d1, #4fc3f7);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -138,39 +193,40 @@ def ml_svd_compress(image, model, X_mean, X_std, max_k=256):
     compressed_img = svd_compress(image, k_pred)
     return compressed_img, k_pred
 
-# Header
-st.title("ML-SVD Image Compression")
-st.markdown(
-    "<p style='text-align: center; color: #34495e;'>"
-    "Upload a JPG image to compress it using Machine Learning-based SVD. "
-    "Compare quality metrics and download the result."
-    "</p>",
-    unsafe_allow_html=True
-)
+# Welcome banner
+st.markdown("""
+<div class='welcome-banner'>
+    <h1>ML-SVD Image Compression</h1>
+    <p>Transform your images with cutting-edge ML-based compression. Upload a JPG to see the magic!</p>
+</div>
+""", unsafe_allow_html=True)
 
-# Sidebar for file upload and help
+# Sidebar for additional controls and info
 with st.sidebar:
-    st.header("Upload Image")
+    st.header("Controls & Info")
+    st.markdown("<p style='font-family: Poppins, sans-serif; color: #01579b;'>Upload your image to start!</p>", unsafe_allow_html=True)
+    
+    # File uploader
     uploaded_file = st.file_uploader("Choose a JPG image", type=["jpg", "jpeg"])
     
     if uploaded_file:
-        # Display thumbnail
+        # Thumbnail preview
         thumbnail = Image.open(uploaded_file).resize((100, 100))
-        st.image(thumbnail, caption="Uploaded Image Preview")
+        st.image(thumbnail, caption="Preview")
     
-    # Help section
-    with st.expander("ℹ️ About ML-SVD Compression"):
+    # Info section
+    with st.expander("🔍 Learn More"):
         st.markdown("""
-        - **ML-SVD**: Uses machine learning to predict optimal SVD rank for compression.
-        - **SSIM**: Measures structural similarity (0-1, higher is better).
-        - **PSNR**: Measures peak signal-to-noise ratio (dB, higher is better).
-        - **Compressed Size**: Estimated size after 8-bit quantization.
+        **What is ML-SVD?**  
+        Uses machine learning to optimize Singular Value Decomposition for image compression.  
+        **SSIM**: Measures structural similarity (0-1, higher is better).  
+        **PSNR**: Measures signal-to-noise ratio (dB, higher is better).  
+        **Compressed Size**: Estimated size using 8-bit quantization.
         """)
 
-# Tabs for content
+# Main content with tabs
 if uploaded_file:
-    # Progress bar
-    with st.spinner("Compressing image..."):
+    with st.spinner("🔄 Compressing your image..."):
         try:
             # Read and preprocess image
             image = Image.open(uploaded_file).convert("RGB")
@@ -189,22 +245,24 @@ if uploaded_file:
             compressed_png, size_png = compress_png(img_resized)
             ssim_png, psnr_png = compute_metrics(img_resized, compressed_png)
 
-            # Tabs for Original, Compressed, and Metrics
-            tab1, tab2, tab3 = st.tabs(["Original Image", "Compressed Image", "Compression Metrics"])
+            # Tabs for organized content
+            tab1, tab2, tab3 = st.tabs(["📷 Original", "🖼️ Compressed", "📊 Metrics"])
 
             with tab1:
-                st.image(image, caption="Original Image", use_column_width=True)
+                st.header("Original Image")
+                st.image(image, caption="Your Uploaded Image", use_column_width=True)
 
             with tab2:
-                st.image(compressed_ml, caption=f"Compressed Image (k={k_pred})", use_column_width=True)
+                st.header("Compressed Image (ML-SVD)")
+                st.image(compressed_ml, caption=f"Compressed with k={k_pred}", use_column_width=True)
                 
-                # Download compressed image
+                # Download button
                 compressed_pil = Image.fromarray((compressed_ml * 255).astype(np.uint8))
                 buf = io.BytesIO()
                 compressed_pil.save(buf, format="JPEG")
                 byte_im = buf.getvalue()
                 st.download_button(
-                    label="Download Compressed Image",
+                    label="⬇️ Download Compressed Image",
                     data=byte_im,
                     file_name="compressed_image.jpg",
                     mime="image/jpeg",
@@ -212,10 +270,13 @@ if uploaded_file:
                 )
 
             with tab3:
-                st.subheader("Compression Metrics")
+                st.header("Compression Metrics")
+                st.markdown("<p style='font-family: Poppins, sans-serif; color: #01579b;'>Compare ML-SVD with JPEG and PNG</p>", unsafe_allow_html=True)
+                
+                # Metrics in cards
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+                    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
                     st.metric("Method", "ML-SVD")
                     st.metric("SSIM", f"{ssim_ml:.4f}")
                     st.metric("PSNR (dB)", f"{psnr_ml:.2f}")
@@ -223,7 +284,7 @@ if uploaded_file:
                     st.metric("Original Size (KB)", f"{original_size:.2f}")
                     st.markdown("</div>", unsafe_allow_html=True)
                 with col2:
-                    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+                    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
                     st.metric("Method", "JPEG")
                     st.metric("SSIM", f"{ssim_jpeg:.4f}")
                     st.metric("PSNR (dB)", f"{psnr_jpeg:.2f}")
@@ -231,7 +292,7 @@ if uploaded_file:
                     st.metric("Original Size (KB)", f"{original_size:.2f}")
                     st.markdown("</div>", unsafe_allow_html=True)
                 with col3:
-                    st.markdown("<div class='metric-box'>", unsafe_allow_html=True)
+                    st.markdown("<div class='metric-card'>", unsafe_allow_html=True)
                     st.metric("Method", "PNG")
                     st.metric("SSIM", f"{ssim_png:.4f}")
                     st.metric("PSNR (dB)", f"{psnr_png:.2f}")
@@ -239,22 +300,22 @@ if uploaded_file:
                     st.metric("Original Size (KB)", f"{original_size:.2f}")
                     st.markdown("</div>", unsafe_allow_html=True)
 
-                # Comparison slider (approximated with side-by-side images)
-                st.subheader("Side-by-Side Comparison")
+                # Side-by-side comparison
+                st.header("Side-by-Side Comparison")
                 col_left, col_right = st.columns(2)
                 with col_left:
-                    st.image(image, caption="Original", use_column_width=True)
+                    st.image(image, caption="Original Image", use_column_width=True)
                 with col_right:
                     st.image(compressed_ml, caption="Compressed (ML-SVD)", use_column_width=True)
 
         except Exception as e:
-            st.error(f"Error processing image: {e}")
+            st.error(f"🚨 Error processing image: {e}")
 
 # Footer
-st.markdown("---")
-st.markdown(
-    "<p style='text-align: center; color: #34495e;'>"
-    "Built with Streamlit for ML-SVD Image Compression Project | Powered by xAI"
-    "</p>",
-    unsafe_allow_html=True
-)
+st.markdown("""
+<div style='text-align: center; padding: 20px; background: #ffffff; border-radius: 10px; margin-top: 20px;'>
+    <p style='font-family: Poppins, sans-serif; color: #01579b;'>
+        Built with Streamlit for ML-SVD Image Compression Project | Powered by xAI
+    </p>
+</div>
+""", unsafe_allow_html=True)
