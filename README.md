@@ -1,4 +1,3 @@
-```markdown
 # 🧠 ML-Assisted Image Compression with SVD and CNN
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
@@ -76,6 +75,7 @@ This project implements a **cutting-edge image compression pipeline** that intel
 
 ### 🧱 CNN Architecture
 
+
 ```
 Input (64×64×1) 
     ↓
@@ -92,6 +92,7 @@ Flatten → Dense (128) → Dense (64) → Dropout (0.3)
 Output (Scaled Sigmoid: 10-256)
 ```
 
+
 ### 🎯 Training Optimization
 - **Loss Function**: MSE with L2 regularization (λ = 0.001)
 - **Optimizer**: Adam with adaptive learning rate
@@ -102,18 +103,19 @@ Output (Scaled Sigmoid: 10-256)
 
 ## 📁 Project Structure
 
+
 ```
 ml-svd-compression/
 ├── 🧠 model/
-│   ├── ml_svd_model.keras    # Trained CNN model
-│   ├── X_mean.npy           # Feature normalization
-│   └── X_std.npy            # Feature standardization
-├── 📊 step6_cnn.py          # CNN training pipeline
+│ ├── ml_svd_model.keras # Trained CNN model
+│ ├── X_mean.npy # Feature normalization
+│ └── X_std.npy # Feature standardization
+├── 📊 step6_cnn.py # CNN training pipeline
 ├── 🧪 step7_evaluate_ml_svd.py # ML-SVD evaluation
-├── ⚖️ step8_benchmark.py    # Format comparison
-├── 🌐 streamlit_app.py      # Web interface
-├── 📦 requirements.txt      # Dependencies
-└── 📖 README.md            # Documentation
+├── ⚖️ step8_benchmark.py # Format comparison
+├── 🌐 streamlit_app.py # Web interface
+├── 📦 requirements.txt # Dependencies
+└── 📖 README.md # Documentation
 ```
 
 ---
