@@ -226,8 +226,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact
 
 Have questions or suggestions? 
-- 📧 Email: [your-email@example.com]
-- 🐙 GitHub: [@your-username]
+- 📧 Email: anmolsaini87.40@gmail.com
+- 🐙 GitHub: Saini-Anmol
 - 🌐 Project Issues: [GitHub Issues](../../issues)
 
 ---
